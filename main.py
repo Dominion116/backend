@@ -132,7 +132,7 @@ async def unlock_device(pin_data: dict):
 
 # Transaction Endpoints
 
-@app.post("/api/transaction/sign", response_model=SignatureResult)
+@app.post("/api/transaction/sign")
 async def sign_transaction(transaction: TransactionRequest):
     """Sign a transaction with the hardware wallet"""
     try:
@@ -151,11 +151,12 @@ async def sign_transaction(transaction: TransactionRequest):
             "timestamp": datetime.utcnow().isoformat()
         })
         
-        return SignatureResult(
-            success=True,
-            data=result,
-            message="Transaction signing initiated"
-        )
+        # Return the result directly, not wrapped in ApiResponse
+        return {
+            "success": True,
+            "data": result,  # This contains the signing_requested info
+            "message": "Transaction signing initiated"
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Transaction signing failed: {str(e)}")
 
