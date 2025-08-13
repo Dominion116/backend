@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 import uuid
 
-from models.device import DeviceState, DeviceInfo, TransactionRequest, SignatureResponse
+from models.device import DeviceState, DeviceInfo, TransactionRequest, SignatureResult
 from models.responses import DeviceStatusResponse, ConnectionResponse, ApiResponse
 from services.device_simulator import DeviceSimulator
 from services.websocket_manager import WebSocketManager
@@ -132,7 +132,7 @@ async def unlock_device(pin_data: dict):
 
 # Transaction Endpoints
 
-@app.post("/api/transaction/sign", response_model=SignatureResponse)
+@app.post("/api/transaction/sign", response_model=SignatureResult)
 async def sign_transaction(transaction: TransactionRequest):
     """Sign a transaction with the hardware wallet"""
     try:
@@ -151,7 +151,7 @@ async def sign_transaction(transaction: TransactionRequest):
             "timestamp": datetime.utcnow().isoformat()
         })
         
-        return SignatureResponse(
+        return SignatureResult(
             success=True,
             data=result,
             message="Transaction signing initiated"
