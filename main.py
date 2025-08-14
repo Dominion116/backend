@@ -28,14 +28,13 @@ app = FastAPI(
 )
 
 # CORS middleware for frontend integration
-# Replace the CORS middleware configuration:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000", 
+        "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://*.vercel.app",  # Add this for Vercel
-        "http://fhe-sim.vercel.app"  # Replace with your actual Vercel URL
+        "https://fhe-sim.vercel.app",  # Your Vercel frontend
+        "https://*.vercel.app"  # Allow any Vercel preview deployments
     ],
     allow_credentials=True,
     allow_methods=["*"],
