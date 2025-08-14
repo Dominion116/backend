@@ -13,6 +13,11 @@ from models.responses import DeviceStatusResponse, ConnectionResponse, ApiRespon
 from services.device_simulator import DeviceSimulator
 from services.websocket_manager import WebSocketManager
 
+from services.fhe_service import FHEService
+from models.fhe import FHEComputeRequest, EncryptedValue, FHEDataType
+
+fhe_service = FHEService()
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Octra Hardware Wallet Simulator API",
@@ -220,6 +225,74 @@ async def clear_device_logs():
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to clear logs: {str(e)}")
+    
+
+
+@app.post("/api/fhe/encrypt")
+async def encrypt_data(data: dict):
+    """Encrypt plaintext data for FHE operations"""
+    try:
+        plaintext = data.get("value")
+        data_type = FHEDataType(data.get("data_type", "integer"))
+        
+        encrypted = fhe_service.encrypt_value(plaintext, data_type)
+        
+        return ApiResponse(
+            success=True,
+            data={"encrypted_value": encrypted.dict()},
+            message="Data encrypted successfully"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Encryption failed: {str(e)}")
+
+@app.post("/api/fhe/compute")
+async def compute_fhe(request: FHEComputeRequest):
+    """Perform FHE computation on encrypted data"""
+    try:
+        result = fhe_service.perform_computation(request)
+        
+        # Broadcast computation via WebSocket
+        await websocket_manager.broadcast({
+            "type": "fhe_computation_complete",
+            "operation": request.operation.value,
+            "success": result.success,
+            "gas_used": result.gas_used,
+            "computation_time": result.computation_time,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+        return ApiResponse(
+            success=True,
+            data={"computation_result": result.dict()},
+            message=f"FHE {request.operation.value} operation completed"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"FHE computation failed: {str(e)}")
+
+@app.get("/api/fhe/demos")
+async def get_fhe_demos():
+    """Get pre-built FHE demonstration scenarios"""
+    demos = fhe_service.get_demo_scenarios()
+    return ApiResponse(
+        success=True,
+        data={"demos": demos},
+        message="FHE demo scenarios retrieved"
+    )
+
+@app.get("/api/fhe/operations")
+async def get_fhe_operations():
+    """Get available FHE operations and their costs"""
+    return {
+        "operations": [
+            {"name": "add", "description": "Add encrypted numbers", "gas_cost": 100},
+            {"name": "multiply", "description": "Multiply encrypted numbers", "gas_cost": 500},
+            {"name": "compare", "description": "Compare encrypted values", "gas_cost": 300},
+            {"name": "max", "description": "Find maximum of encrypted values", "gas_cost": 400},
+            {"name": "average", "description": "Calculate average of encrypted values", "gas_cost": 600},
+            {"name": "vote", "description": "Aggregate encrypted votes", "gas_cost": 200}
+        ]
+    }
+
 
 # WebSocket endpoint for real-time updates
 
