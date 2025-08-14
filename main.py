@@ -28,9 +28,15 @@ app = FastAPI(
 )
 
 # CORS middleware for frontend integration
+# Replace the CORS middleware configuration:
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "https://*.vercel.app",  # Add this for Vercel
+        "http://fhe-sim.vercel.app"  # Replace with your actual Vercel URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -330,14 +336,16 @@ async def internal_error_handler(request, exc):
     )
 
 if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    
     print("🚀 Starting Octra Hardware Wallet Simulator API...")
-    print("📖 API Documentation: http://localhost:8000/api/docs")
-    print("🔌 WebSocket: ws://localhost:8000/ws")
+    print(f"📖 API Documentation: http://localhost:{port}/api/docs")
+    print(f"🔌 WebSocket: ws://localhost:{port}/ws")
     
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
+        port=port,
         log_level="info"
     )
